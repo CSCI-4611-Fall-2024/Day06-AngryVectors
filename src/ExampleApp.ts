@@ -6,6 +6,7 @@
 */
 
 import * as gfx from 'gophergfx'
+import { Arrow } from './Arrow';
 
 export class ExampleApp extends gfx.GfxApp
 {   
@@ -16,6 +17,13 @@ export class ExampleApp extends gfx.GfxApp
     private target1Pos = new gfx.Vector3(21, 6, -35);
     private target2Pos = new gfx.Vector3(25, 6, -35);
     private target3Pos = new gfx.Vector3(23, 18, -35);
+
+    private target1 = new gfx.Mesh3();
+    private target2 = new gfx.Mesh3();
+    private target3 = new gfx.Mesh3();
+
+
+    private arrow = new Arrow();
 
 
     // --- Create the ExampleApp class ---
@@ -56,25 +64,25 @@ export class ExampleApp extends gfx.GfxApp
         ground.material = groundMaterial;
 
         // 3 targets
-        const target1 = gfx.Geometry3Factory.createBox(
+        this.target1 = gfx.Geometry3Factory.createBox(
             this.targetSize.x, this.targetSize.y, this.targetSize.z);
-        this.scene.add(target1);
-        target1.position = this.target1Pos;
+        this.scene.add(this.target1);
+        this.target1.position = this.target1Pos;
         const targetMaterial = new gfx.PhongMaterial();
         targetMaterial.setColor(new gfx.Color(0.6, 0.4, 0.2));
-        target1.material = targetMaterial;
+        this.target1.material = targetMaterial;
 
-        const target2 = gfx.Geometry3Factory.createBox(
+        this.target2 = gfx.Geometry3Factory.createBox(
             this.targetSize.x, this.targetSize.y, this.targetSize.z);
-        this.scene.add(target2);
-        target2.position = this.target2Pos;
-        target2.material = targetMaterial;
+        this.scene.add(this.target2);
+        this.target2.position = this.target2Pos;
+        this.target2.material = targetMaterial;
 
-        const target3 = gfx.Geometry3Factory.createBox(
+        this.target3 = gfx.Geometry3Factory.createBox(
             this.targetSize.x, this.targetSize.y, this.targetSize.z);
-        this.scene.add(target3);
-        target3.position = this.target3Pos;
-        target3.material = targetMaterial;
+        this.scene.add(this.target3);
+        this.target3.position = this.target3Pos;
+        this.target3.material = targetMaterial;
 
         // launcher
         const launcher = gfx.Geometry3Factory.createCylinder(50, 1, 7);
@@ -90,6 +98,9 @@ export class ExampleApp extends gfx.GfxApp
         birdMaterial.setColor(gfx.Color.RED);
         this.bird.material = birdMaterial;
         this.scene.add(this.bird);
+
+        // arrow
+        this.scene.add(this.arrow);
 
         this.reset();
     }
@@ -117,6 +128,7 @@ export class ExampleApp extends gfx.GfxApp
     reset(): void
     {
         this.simulationTime = 0;
+        this.target1.visible = true;
     }
 
 
@@ -127,8 +139,31 @@ export class ExampleApp extends gfx.GfxApp
 
         this.bird.position = this.calcBirdPos(this.simulationTime);
 
+        const vel = this.calcBirdVel(this.simulationTime);
+        this.arrow.setVector(vel);
+        this.arrow.position = this.bird.position;
+
+        if (this.sphereIntersectsBox(this.bird.position, this.birdRadius,
+            this.target1Pos, this.targetSize)) {
+            this.target1.visible = false;
+        }
+
         if (this.bird.position.y < 0) {
             this.reset();
+        }
+    }
+
+    // return true if the sphere is inside the box
+    sphereIntersectsBox(spherePos: gfx.Vector3, sphereRad: number,
+        boxCenterPos: gfx.Vector3, boxLengthOnEachSize: gfx.Vector3) : boolean 
+    {
+        // test to see if the spherePos.x + rad is within the bounds of the box
+        if ((spherePos.x + sphereRad >= boxCenterPos.x - boxLengthOnEachSize.x/2) &&
+            (spherePos.x - sphereRad <= boxCenterPos.x + boxLengthOnEachSize.x/2)) {
+            return true;
+        }
+        else {
+            return false;
         }
     }
 
